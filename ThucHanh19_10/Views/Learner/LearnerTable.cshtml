@@ -1,0 +1,80 @@
+﻿@model IEnumerable<ThucHanh19_10.Models.Learner>
+
+@{
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+}
+
+<table class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>Mã</th>
+            <th>Tên</th>
+            <th>Họ</th>
+            <th>Ngành</th>
+            <th>Ngày nhập học</th>
+            <th>Chức năng</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @if (Model != null && Model.Any())
+        {
+            foreach (var s in Model)
+            {
+                <tr>
+                    <td>@s.LearnerID</td>
+                    <td>@s.FirstMidName</td>
+                    <td>@s.LastName</td>
+                    <td>@s.Major?.MajorName</td>
+                    <td>@s.EnrollmentDate.ToString("dd/MM/yyyy")</td>
+                    <td>
+                        <a asp-action="Edit"
+                           asp-route-id="@s.LearnerID">Edit</a> |
+                        <a asp-action="Delete"
+                           asp-route-id="@s.LearnerID">Delete</a>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="6" class="text-center">
+                    Không tìm thấy Learner nào!
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (totalPages > 1)
+{
+    <nav>
+        <ul class="pagination">
+
+            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                <a href="#" class="page-link" data-page="@(currentPage - 1)">
+                    Trước
+                </a>
+            </li>
+
+            @for (int i = 1; i <= totalPages; i++)
+            {
+                <li class="page-item @(i == currentPage ? "active" : "")">
+                    <a href="#" class="page-link" data-page="@i">
+                        @i
+                    </a>
+                </li>
+            }
+
+            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                <a href="#" class="page-link" data-page="@(currentPage + 1)">
+                    Sau
+                </a>
+            </li>
+
+        </ul>
+    </nav>
+}
+    

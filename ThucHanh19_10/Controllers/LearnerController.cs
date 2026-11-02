@@ -14,11 +14,82 @@ namespace ThucHanh19_10.Controllers
             db = context;
         }
 
+
         public IActionResult Index()
         {
-            var learners = db.Learners.Include(m => m.Major).ToList();
+            int pageSize = 3;
+            int pageIndex = 1;
+
+            var query = db.Learners
+                .Include(l => l.Major)
+                .AsQueryable();
+
+            int totalItems = query.Count();
+
+            int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            var learners = query
+                .OrderBy(l => l.LearnerID)
+                .Skip((pageIndex - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            ViewBag.CurrentPage = pageIndex;
+            ViewBag.TotalPages = totalPages;
+
             return View(learners);
         }
+
+        public IActionResult LearnerFilter(int? mid, string? keyword, int pageIndex = 1)
+        {
+            int pageSize = 3;
+
+            var query = db.Learners
+                .Include(l => l.Major)
+                .AsQueryable();
+
+            if (mid.HasValue && mid.Value != 0)
+            {
+                query = query.Where(l => l.MajorID == mid.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                query = query.Where(l =>
+                    l.FirstMidName.Contains(keyword) ||
+                    l.LastName.Contains(keyword));
+            }
+            int totalItems = query.Count();
+
+            int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            if (totalPages == 0)
+            {
+                totalPages = 1;
+            }
+
+            if (pageIndex < 1)
+            {
+                pageIndex = 1;
+            }
+
+            if (pageIndex > totalPages)
+            {
+                pageIndex = totalPages;
+            }
+
+            var learners = query
+                .OrderBy(l => l.LearnerID)
+                .Skip((pageIndex - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            ViewBag.CurrentPage = pageIndex;
+            ViewBag.TotalPages = totalPages;
+
+            return PartialView("LearnerTable", learners);
+        }
+
         public IActionResult Create()
         {
             var majors = new List<SelectListItem>();

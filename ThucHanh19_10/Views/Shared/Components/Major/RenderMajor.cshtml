@@ -1,0 +1,18 @@
+﻿@model IEnumerable<ThucHanh19_10.Models.Major>
+
+<div class="list-group">
+    <a href="javascript:void(0)"
+       class="list-group-item list-group-item-action major-filter"
+       data-id="0">
+        Tất cả ngành
+    </a>
+
+    @foreach (var item in Model)
+    {
+        <a href="javascript:void(0)"
+           class="list-group-item list-group-item-action major-filter"
+           data-id="@item.MajorID">
+            @item.MajorName
+        </a>
+    }
+</div>

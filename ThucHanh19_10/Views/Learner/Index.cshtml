@@ -1,34 +1,152 @@
-﻿@{
-    ViewData["Title"] = "Index";
+﻿@model IEnumerable<ThucHanh19_10.Models.Learner>
+
+@{
+    ViewData["Title"] = "Learner List";
     Layout = "~/Views/Shared/MyLayout.cshtml";
 }
-@model IEnumerable<ThucHanh19_10.Models.Learner>
+
 <div class="ms-2 mx-2">
     <h1>Learner List</h1>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Mã</th>
-                <th>Tên</th>
-                <th>Họ</th>
-                <th>Ngành</th>
-                <th>Ngày Nhập Học</th>
-                <th>Chức năng</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var s in Model)
-            {
-                <tr>
-                    <td>@s.LearnerID</td>
-                    <td>@s.FirstMidName</td>
-                    <td>@s.LastName</td>
-                    <td>@s.Major.MajorName</td>
-                    <td>@s.EnrollmentDate</td>
-                    <td><a asp-action="Edit" asp-route-id="@s.LearnerID">Edit</a>|<a asp-action="Delete" asp-route-id="@s.LearnerID">Delete</a></td>
-                </tr>
-            }
-        </tbody>
-    </table>
-    <a asp-action="Create" class="btn btn-primary">Create New Student</a>
+
+    <h5>Chọn ngành học:</h5>
+    @await Component.InvokeAsync("Major")
+
+    <form id="searchForm" class="mb-3 mt-3" onsubmit="return false;">
+        <div class="input-group" style="max-width: 420px;">
+            <input id="keyword"
+                   class="form-control"
+                   type="text"
+                   placeholder="Nhập tên Learner cần tìm..." />
+
+            <button id="btnSearch" class="btn btn-primary" type="button">
+                Search
+            </button>
+        </div>
+    </form>
+
+    <div id="content">
+        @await Html.PartialAsync("LearnerTable", Model)
+    </div>
+
+    <a asp-action="Create" class="btn btn-primary mt-2">
+        Create New Learner
+    </a>
 </div>
+
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            const contentElement = document.getElementById('content');
+            const keywordElement = document.getElementById('keyword');
+            const searchElement = document.getElementById('btnSearch');
+
+            // Kiểm tra kiểu phần tử và tránh giá trị null
+            if (!(contentElement instanceof HTMLElement)) return;
+            if (!(keywordElement instanceof HTMLInputElement)) return;
+            if (!(searchElement instanceof HTMLButtonElement)) return;
+
+            const content = contentElement;
+            const keywordInput = keywordElement;
+            const searchButton = searchElement;
+
+            const filterUrl = '@Url.Action("LearnerFilter", "Learner")';
+
+            let selectedMajorId = 0;
+                  
+            async function loadLearners(pageIndex = 1) {
+
+                const params = new URLSearchParams();
+
+                params.append('mid', String(selectedMajorId));
+                params.append('keyword', keywordInput.value);
+                params.append('pageIndex', String(pageIndex));
+
+                try {
+                    const response = await fetch(
+                        filterUrl + '?' + params.toString()
+                    );
+
+                    if (!response.ok) {
+                        throw new Error('Không thể tải dữ liệu');
+                    }
+
+                    const html = await response.text();
+
+                    content.innerHTML = html;
+
+                } catch (error) {
+                    alert('Lỗi khi tải danh sách Learner!');
+                    console.error(error);
+                }
+            }
+
+            // Lọc theo ngành
+            document.addEventListener('click', function (event) {
+
+                if (!(event.target instanceof Element)) return;
+
+                const link = event.target.closest('.major-filter');
+
+                if (!link) return;
+
+                event.preventDefault();
+
+                selectedMajorId = parseInt(
+                    link.getAttribute('data-id') || '0',
+                    10
+                );
+
+                document.querySelectorAll('.major-filter').forEach(function (item) {
+                    item.classList.remove('active');
+                });
+
+                link.classList.add('active');
+
+                loadLearners(1);
+            });
+
+            // Tìm kiếm bằng nút Search
+            searchButton.addEventListener('click', function () {
+                loadLearners(1);
+            });
+
+            // Tìm kiếm bằng phím Enter
+            keywordInput.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    loadLearners(1);
+                }
+            });
+
+            // Chuyển trang
+            content.addEventListener('click', function (event) {
+
+                if (!(event.target instanceof Element)) return;
+
+                const pageLink = event.target.closest('.page-link[data-page]');
+
+                if (!pageLink) return;
+
+                event.preventDefault();
+
+                const pageItem = pageLink.closest('.page-item');
+
+                if (pageItem && pageItem.classList.contains('disabled')) {
+                    return;
+                }
+
+                const pageIndex = parseInt(
+                    pageLink.getAttribute('data-page') || '0',
+                    10
+                );
+
+                if (pageIndex > 0) {
+                    loadLearners(pageIndex);
+                }
+            });
+
+        });
+    </script>
+}
